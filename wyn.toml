@@ -1,0 +1,4 @@
+[project]
+name = "jwt"
+version = "0.1.0"
+description = "JSON Web Token encode/decode for API auth"
