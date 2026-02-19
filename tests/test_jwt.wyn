@@ -10,24 +10,39 @@ fn jwt_payload(sub: string, exp: string) -> string {
     return base64url_encode("{\"sub\":\"" + sub + "\",\"exp\":" + exp + "}")
 }
 
-fn main() -> int {
-    Test.init("jwt")
+test "header encoded" {
     var header = jwt_header()
-    Test.assert(header.len() > 10, "header encoded")
+    assert(header.len() > 10)
+}
 
+test "payload encoded" {
+    var header = jwt_header()
     var payload = jwt_payload("user123", "9999999999")
-    Test.assert(payload.len() > 10, "payload encoded")
+    assert(payload.len() > 10)
+}
 
+test "has dot separator" {
+    var header = jwt_header()
+    var payload = jwt_payload("user123", "9999999999")
     var token_body = header + "." + payload
-    Test.assert(token_body.contains("."), "has dot separator")
+    assert(token_body.contains("."))
+}
 
+test "signature generated" {
+    var header = jwt_header()
+    var payload = jwt_payload("user123", "9999999999")
+    var token_body = header + "." + payload
     // Sign with HMAC-SHA256
     var sig = Crypto.hmac_sha256("secret", token_body)
-    Test.assert(sig.len() > 0, "signature generated")
+    assert(sig.len() > 0)
+}
 
+test "3 parts" {
+    var header = jwt_header()
+    var payload = jwt_payload("user123", "9999999999")
+    var token_body = header + "." + payload
+    // Sign with HMAC-SHA256
+    var sig = Crypto.hmac_sha256("secret", token_body)
     var token = token_body + "." + sig
-    Test.assert_eq_int(token.split(".").len(), 3, "3 parts")
-
-    Test.summary()
-    return 0
+    assert_eq(token.split(".").len(), 3)
 }
