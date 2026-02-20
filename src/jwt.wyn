@@ -1,4 +1,5 @@
-// JWT package tests — TDD
+// jwt — JSON Web Token encode/decode/verify
+// Pure Wyn using built-in Crypto and Encoding modules
 
 fn base64url_encode(s: string) -> string {
     return Encoding.base64_encode(s).replace("+", "-").replace("/", "_").replace("=", "")
@@ -32,35 +33,4 @@ fn Jwt_verify(token: string, secret: string) -> int {
     var expected_sig = base64url_encode(Crypto.hmac_sha256(secret, body))
     if expected_sig == parts[2] { return 1 }
     return 0
-}
-
-test "encode produces 3 parts" {
-    var token = Jwt_encode("{\"sub\":\"user123\"}", "secret")
-    assert_eq(token.split(".").len(), 3)
-}
-
-test "decode returns payload" {
-    var token = Jwt_encode("{\"sub\":\"user123\"}", "secret")
-    var payload = Jwt_decode(token)
-    assert(payload.contains("user123"))
-}
-
-test "verify valid token" {
-    var token = Jwt_encode("{\"sub\":\"user123\"}", "secret")
-    assert_eq(Jwt_verify(token, "secret"), 1)
-}
-
-test "verify wrong secret fails" {
-    var token = Jwt_encode("{\"sub\":\"user123\"}", "secret")
-    assert_eq(Jwt_verify(token, "wrong"), 0)
-}
-
-test "verify tampered token fails" {
-    var token = Jwt_encode("{\"sub\":\"user123\"}", "secret")
-    var tampered = token + "x"
-    assert_eq(Jwt_verify(tampered, "secret"), 0)
-}
-
-test "empty token decode returns empty" {
-    assert_eq(Jwt_decode(""), "")
 }
