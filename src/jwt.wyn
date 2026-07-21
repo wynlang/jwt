@@ -1,4 +1,4 @@
-// jwt — JSON Web Token encode/decode/verify
+// jwt - JSON Web Token encode/decode/verify
 // Pure Wyn using built-in Crypto and Encoding modules
 
 fn base64url_encode(s: string) -> string {

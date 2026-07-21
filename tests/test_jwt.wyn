@@ -1,4 +1,4 @@
-// JWT package tests — TDD
+// JWT package tests - TDD
 
 fn base64url_encode(s: string) -> string {
     return Encoding.base64_encode(s).replace("+", "-").replace("/", "_").replace("=", "")

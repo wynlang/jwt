@@ -1,4 +1,4 @@
-# jwt — Official Wyn Package
+# jwt - Official Wyn Package
 
 JSON Web Token encode/decode. Pure Wyn using built-in Crypto module.
 
