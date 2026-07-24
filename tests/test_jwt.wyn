@@ -1,66 +1,46 @@
-// JWT package tests - TDD
+// Exercises the shipped lib in src/jwt.wyn via the tests/jwt.wyn symlink.
+// NOTE: this package uses a non-standard signature encoding
+// (base64url(hex(hmac)) rather than RFC-7519 base64url(raw-bytes)),
+// so these vectors are self-consistent but not RFC-interoperable.
+import jwt
 
-fn base64url_encode(s: string) -> string {
-    return Encoding.base64_encode(s).replace("+", "-").replace("/", "_").replace("=", "")
+test "base64url round-trip" {
+    var enc = jwt.base64url_encode("{\"sub\":\"u1\"}")
+    assert_eq(jwt.base64url_decode(enc), "{\"sub\":\"u1\"}")
 }
-
-fn base64url_decode(s: string) -> string {
-    var padded = s.replace("-", "+").replace("_", "/")
-    var mod = padded.len() % 4
-    if mod == 2 { padded = padded + "==" }
-    if mod == 3 { padded = padded + "=" }
-    return Encoding.base64_decode(padded)
+test "base64url has no padding or +/" {
+    var enc = jwt.base64url_encode("????>>>>")
+    assert(not enc.contains("="))
+    assert(not enc.contains("+"))
+    assert(not enc.contains("/"))
 }
-
-fn Jwt_encode(payload: string, secret: string) -> string {
-    var header = base64url_encode("{\"alg\":\"HS256\",\"typ\":\"JWT\"}")
-    var body = header + "." + base64url_encode(payload)
-    var sig = base64url_encode(Crypto.hmac_sha256(secret, body))
-    return body + "." + sig
+test "encode produces standard header" {
+    var tok = jwt.Jwt_encode("{\"sub\":\"u1\"}", "secret")
+    assert(tok.starts_with("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."))
 }
-
-fn Jwt_decode(token: string) -> string {
-    var parts = token.split(".")
-    if parts.len() < 2 { return "" }
-    return base64url_decode(parts[1])
+test "encode has three parts" {
+    var tok = jwt.Jwt_encode("{\"sub\":\"u1\"}", "secret")
+    assert_eq(tok.split(".").len(), 3)
 }
-
-fn Jwt_verify(token: string, secret: string) -> int {
-    var parts = token.split(".")
-    if parts.len() != 3 { return 0 }
-    var body = parts[0] + "." + parts[1]
-    var expected_sig = base64url_encode(Crypto.hmac_sha256(secret, body))
-    if expected_sig == parts[2] { return 1 }
-    return 0
+test "decode recovers payload" {
+    var tok = jwt.Jwt_encode("{\"sub\":\"u1\"}", "secret")
+    assert_eq(jwt.Jwt_decode(tok), "{\"sub\":\"u1\"}")
 }
-
-test "encode produces 3 parts" {
-    var token = Jwt_encode("{\"sub\":\"user123\"}", "secret")
-    assert_eq(token.split(".").len(), 3)
+test "verify good signature" {
+    var tok = jwt.Jwt_encode("{\"sub\":\"u1\"}", "secret")
+    assert_eq(jwt.Jwt_verify(tok, "secret"), 1)
 }
-
-test "decode returns payload" {
-    var token = Jwt_encode("{\"sub\":\"user123\"}", "secret")
-    var payload = Jwt_decode(token)
-    assert(payload.contains("user123"))
+test "verify wrong secret" {
+    var tok = jwt.Jwt_encode("{\"sub\":\"u1\"}", "secret")
+    assert_eq(jwt.Jwt_verify(tok, "wrong"), 0)
 }
-
-test "verify valid token" {
-    var token = Jwt_encode("{\"sub\":\"user123\"}", "secret")
-    assert_eq(Jwt_verify(token, "secret"), 1)
+test "verify tampered payload" {
+    var tok = jwt.Jwt_encode("{\"sub\":\"u1\"}", "secret")
+    var parts = tok.split(".")
+    var forged = parts[0] + "." + jwt.base64url_encode("{\"sub\":\"admin\"}") + "." + parts[2]
+    assert_eq(jwt.Jwt_verify(forged, "secret"), 0)
 }
-
-test "verify wrong secret fails" {
-    var token = Jwt_encode("{\"sub\":\"user123\"}", "secret")
-    assert_eq(Jwt_verify(token, "wrong"), 0)
-}
-
-test "verify tampered token fails" {
-    var token = Jwt_encode("{\"sub\":\"user123\"}", "secret")
-    var tampered = token + "x"
-    assert_eq(Jwt_verify(tampered, "secret"), 0)
-}
-
-test "empty token decode returns empty" {
-    assert_eq(Jwt_decode(""), "")
+test "verify malformed" {
+    assert_eq(jwt.Jwt_verify("not.a.jwt.token", "secret"), 0)
+    assert_eq(jwt.Jwt_verify("onlyonepart", "secret"), 0)
 }

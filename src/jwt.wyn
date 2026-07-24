@@ -1,11 +1,11 @@
 // jwt - JSON Web Token encode/decode/verify
 // Pure Wyn using built-in Crypto and Encoding modules
 
-fn base64url_encode(s: string) -> string {
+pub fn base64url_encode(s: string) -> string {
     return Encoding.base64_encode(s).replace("+", "-").replace("/", "_").replace("=", "")
 }
 
-fn base64url_decode(s: string) -> string {
+pub fn base64url_decode(s: string) -> string {
     var padded = s.replace("-", "+").replace("_", "/")
     var mod = padded.len() % 4
     if mod == 2 { padded = padded + "==" }
@@ -13,20 +13,20 @@ fn base64url_decode(s: string) -> string {
     return Encoding.base64_decode(padded)
 }
 
-fn Jwt_encode(payload: string, secret: string) -> string {
+pub fn Jwt_encode(payload: string, secret: string) -> string {
     var header = base64url_encode("{\"alg\":\"HS256\",\"typ\":\"JWT\"}")
     var body = header + "." + base64url_encode(payload)
     var sig = base64url_encode(Crypto.hmac_sha256(secret, body))
     return body + "." + sig
 }
 
-fn Jwt_decode(token: string) -> string {
+pub fn Jwt_decode(token: string) -> string {
     var parts = token.split(".")
     if parts.len() < 2 { return "" }
     return base64url_decode(parts[1])
 }
 
-fn Jwt_verify(token: string, secret: string) -> int {
+pub fn Jwt_verify(token: string, secret: string) -> int {
     var parts = token.split(".")
     if parts.len() != 3 { return 0 }
     var body = parts[0] + "." + parts[1]

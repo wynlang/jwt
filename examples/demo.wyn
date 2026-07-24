@@ -1,0 +1,9 @@
+import jwt
+
+fn main() {
+    var token = jwt.Jwt_encode("{\"sub\":\"user123\",\"exp\":9999999999}", "my-secret")
+    println("token: ${token}")
+    println("decoded: ${jwt.Jwt_decode(token)}")
+    println("verify (correct): ${jwt.Jwt_verify(token, "my-secret")}")
+    println("verify (wrong):   ${jwt.Jwt_verify(token, "nope")}")
+}

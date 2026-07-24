@@ -1,3 +1,3 @@
+*.wyn.out
+wyn_cc_err.txt
 *.wyn.c
-tests/test_*
-!tests/test_*.wyn
